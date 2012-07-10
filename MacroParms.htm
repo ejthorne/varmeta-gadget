@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head>
+    <title>Flynet Macro Parameters</title>
+	<link rel="stylesheet" type="text/css" href="FlowMacros.css" title="Macro Parameters CSS" />
+	<style type="text/css">
+		#parmsBody
+		{
+			margin:2px;
+			padding:2px;
+			background-color:rgb(0,0,32);
+		}
+	</style>
+    <script type="text/javascript">
+		var fvm=null,
+			fvmCtl;
+		if ((window.parent) &&
+			 (window.parent.fvmCtl))
+		{
+			fvmCtl=window.parent.fvmCtl;
+			fvm=window.parent.fvmCtl.fvm;
+			fvmCtl.macDoc=document;
+			fvmCtl.SetSizingElems('pform','parmsBody');
+		}
+		else		 
+			alert("This Page must run in a FVTerm IFrame!");
+		function Reload()
+		{
+			fvmCtl.ActivateWinPage();
+			GenParms();
+			window.setTimeout("SetFocus(0)",1);
+		}
+		function GenParms()
+		{
+			document.onkeydown=CheckEnterKey;
+			var t='';
+			if (fvm.ParameterInfo==null)
+			{
+				alert("This Macro has no parameter definitions!");
+				return;
+			}
+			if ((Object.prototype.toString.call(fvm.macroParms) == "[object Array]"))
+			{
+				for (var fset in fvm.macroParms)
+				{
+					t += BuildFieldSet(fvm.macroParms[fset]);
+				}
+			}
+			else
+			{
+				t = BuildFieldSet(fvm.macroParms);
+			}
+			document.getElementById("pform").innerHTML=t;
+			fvmCtl.SizeWinPageTo();
+			fvmCtl.ActivateWinPage();
+			window.setTimeout("SetFocus(0)",1);
+		}
+		function SetFocus(index)
+		{
+			var inps = document.getElementsByTagName("input");
+			if (index < inps.length)
+			{
+				try { inps.item(index).focus(); } catch (e) { }
+			}
+		}
+		function CheckEnterKey(e)
+		{
+			var evt = (e) ? e : (window.event) ? window.event : null,
+				 key;
+			if(evt)
+			{
+				key=(evt.charCode)?evt.charCode:
+					((evt.keyCode)?evt.keyCode:((evt.which)?evt.which:0));
+				
+				if ((key==13) || 
+				    (key==27))
+				{
+					if (key==13)
+						onEnter();
+					else
+						onCancel();
+					evt.cancelBubble=true;  
+					if (evt.stopPropagation) evt.stopPropagation();
+					if (evt.preventDefault) evt.preventDefault();
+					evt.returnValue=false;  
+					return false;
+				}
+			}
+			return true;
+		}
+		function BuildFieldSet(fset)
+		{
+			var t = '<fieldset id="macParms" style="width:35em;border:solid 1px #ccccff;">\r\n<legend style="color:#ccccff;font-weight:bold;">' + ((fset.legend) ? fset.legend : "Macro Parameters") + '</legend>\r\n<br />',
+				index = 1, parmID, parm, val, type, prompt, IsFile, hasEntry = false;
+			for(parmID in fset.varsMeta)
+			{
+				parm=fset.varsMeta[parmID];
+				val=(parm.val)?parm.val:"";
+				type=(parm.type)?parm.type:"text";
+				prompt=(parm.prompt)?parm.prompt:false;
+				if (prompt)
+				{
+					hasEntry = true;
+					IsFile=(parm.type && (parm.type=='file'));
+					t += '<label style="color:#ccccff;width:12em;" for="' + parmID + '">' + parm.label + '</label>\n';
+					t+=' <input type="'+type+'" id="'+parmID+'" name="'+parmID+'"\n';
+					if (IsFile)
+						t+=' class="filetype"';
+					else
+						t+='  value="'+val+'" tabindex="'+index+'"';
+					if (parm.title)
+						t+=' title="'+parm.title+'"'
+					if (IsFile)
+					{
+						t+='onchange="document.getElementById(\'cf_'+parmID+'\').innerHTML=\'Current:&nbsp;\'+document.getElementById(\''+parmID+'\').value;" /><br />\n';
+						t += '<span id="cf_' + parmID + '" class="small" style="margin-left:2em;height:2em;color:#ccccff;word-wrap:break-word;" >Current:&nbsp;' + parm.val + '</span>';
+					}
+					else
+						t+='/><br />\n';
+				}
+				index++;
+			}
+			if (!hasEntry)
+				t += '<span style="color:#ccccff">This Macro has no Parameters to Change...Click OK or Press Enter to continue...</span>';
+			t+='</fieldset>';
+			return t;
+		}
+		function onEnter()
+		{
+			var inps = document.getElementsByTagName("input"),
+				i, inp, parm, value, lit, newParms;
+			if (!fvm || !fvm.macroParms)
+			{
+				// probably stutter-click and already processed...
+				return;
+			}
+			for(i=0;i<inps.length;i++)
+			{
+				inp=inps.item(i);
+				parm = fvm.macroParms.varsMeta[inp.id];
+				value = inp.value;
+				// save current value
+				if (parm.type && 
+						(parm.type=='file'))
+				{
+					if (!value || value=='')
+						value=parm.val;
+					else
+					{
+						value=PostFixFile(value,parm);
+						parm.val=value;
+					}
+				}						
+				else
+					parm.val=value; 
+			}
+			window.setTimeout("fvm.ActiveMacroRun()",5);
+			fvmCtl.HideWinPage();
+		}
+		function PostFixFile(value,parm)
+		{
+			if (parm.postfix)
+			{
+				switch(parm.postfix)
+				{
+					case 'activex':
+						return value.replace(/\\/g,'/');
+					case 'escapefix':
+						return value.replace(/\\/g,'\\\\');
+					case 'custom':
+						if (parm.postfixCode)
+						{
+							//postFixCode is in the form 'value=expression;'
+							eval(parm.postfixCode);
+							return value;
+						}
+						break;
+				}
+			}
+			else
+				return value;
+		}
+		function onCancel()
+		{
+			fvm.EndMacro();
+			fvmCtl.HideWinPage();
+		}
+    </script>
+</head>
+<body id="parmsBody" onload="GenParms()">
+<form class="pform" action="#" method="post" id="pform" name="pform">
+</form>
+<div class="btn">
+<span onclick="onEnter()">Go</span>
+<span onclick="onCancel()">Cancel</span>
+</div> 
+</body>
+</html>

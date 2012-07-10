@@ -1,0 +1,797 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head>
+    <title>Macros Manager</title>
+<style type="text/css">
+	.clickable{background-color:#aadddd;cursor:pointer;padding-left:3px;padding-right:5px;}
+	td{background-color:transparent;}
+	table{background-color:#eeeeee;}
+	body{background-color:white;}
+</style>    
+<script language="javascript" type="text/javascript" src="json2.js"></script>    
+<script language="javascript" type="text/javascript" src="FlowRuntime.js"></script>    
+<script language="javascript" type="text/javascript" src="DragMgr.js"></script>    
+<script language="javascript" type="text/javascript" src="ScreenInfo.js"></script>    
+<script language="javascript" type="text/javascript" src="MacDesign.js"></script>    
+<script language="javascript" type="text/javascript" src="FlowEdit.js"></script>    
+<link rel="stylesheet" type="text/css" href="FlowMacros.css" title="Macro Parameters CSS" />
+<!--[if lte IE 7]>
+<style type="text/css">
+td{background-color:#1A6262;}
+#thumbs
+{
+	overflow:auto;
+	text-align:center;
+   height:92px;
+	position:relative;
+	z-index:20;
+	zoom:1;	
+}
+#header
+{
+	font-family:Calibri,Helvetica, Helvetica Neue, Arial;
+	font-size:0.9em;
+}
+</style>
+<![endif]-->
+<script type="text/javascript">
+	var userID = "Test",
+	hostName = "Test",
+	fvmCtl = null,
+	fvm = null,
+	activeTabID = "list",
+	getCursorTo = null;
+
+function SetUserMode(mode, startUp)
+{
+	var umElem = document.getElementById("userMode");
+	if (umElem)
+	{
+		if (!mode)
+		{
+			if (fvm.secToken)
+				mode = 'Admin ('+userID+')';
+			else if (userID == 'Test')
+				mode='None';
+			else if (userID == '.NET')
+				mode='Public'
+			else
+				mode='User ('+userID+')';
+		}
+		umElem.innerHTML = mode;
+	}
+	if (!startUp)
+		Reload();
+}
+
+function Reload()
+{
+	var body = document.getElementById('docBody'),
+		 curElem;
+	if (body)
+	{
+		body.style.height = 'auto';
+		body.style.width = 'auto';
+	}
+	focusIdx = -1;
+	if (getCursorTo)
+	{
+		SetCursorFrom(getCursorTo);
+		getCursorTo = null;
+	}
+
+	if (activeTabID == 'list')
+		GetList();
+	else if (activeTabID == 'gen')
+		FocusWizard();
+	else
+	{
+		WriteTabs(activeTabID);
+		Sizer();
+	}
+	fvm.GetUserInfo(function (info)
+	{
+		if (info.status == "ok")
+		{
+			try
+			{
+				userID = info.userID;
+				SetUserMode(null, true);
+			} catch (e)
+			{
+				alert('GetUserInfo exception: ' + e.message);
+			}
+		}
+	});
+}
+
+function InitMacros() 
+{
+	var uidElem, hnmElem, designJson;
+	if ((window.parent) &&
+		 (window.parent.fvmCtl))
+	{
+		fvmCtl = window.parent.fvmCtl;
+		fvmCtl.macDoc = document;
+		fvmCtl.SetSizingElems('docBody');
+		fvm = fvmCtl.fvm; //fvm is defined in FlowEdit.js
+	}
+	else		 
+		fvm=new flow.macs.Runtime(null);
+
+	if (fvm.activeMacroCode)
+	{	
+		macroPub=fvm.activeMacroIsPub;
+		lastGenText = macroText = fvm.activeMacroCode;
+		macroName=fvm.activeMacroName;
+	}
+
+	if (fvm.design)
+		fvm.design = null;
+
+	fvm.GetUserInfo(function (info)
+	{
+		if (info.status == "ok")
+		{
+			try
+			{
+				userID = info.userID;
+				hostName = info.hostName;
+				fvm.isAuthor = info.IsAuthor;
+				uidElem = document.getElementById("userID");
+				if (uidElem) uidElem.innerHTML = info.userID;
+				hnmElem = document.getElementById("hostName");
+				if (hnmElem) hnmElem.innerHTML = info.hostName;
+			} catch (e)
+			{
+				alert('GetUserInfo exception: ' + e.message);
+			}
+		}
+		if (fvm.recPending)
+		{
+			FocusWizard();
+		}
+		else
+			GetList();
+		SetUserMode(null, true);
+	});
+}
+
+
+function SaveMacro()
+{
+	var name=document.getElementById("name").value;
+	var text=document.getElementById("macro").value;
+	var pub=document.getElementById("cbPub").checked;
+	fvmCtl.FlashMessage('Saving Macro '+name+'...',500);
+	fvm.SaveMacro(name,text,pub,(design)?JSON.stringify(design):null);
+}
+
+function PlayMacro()
+{
+	fvm.keepEditor = true;
+	fvm.RunMacro(document.getElementById("name").value, document.getElementById("macro").value,
+						document.getElementById("cbPub").checked);
+}
+
+function RenameMacro()
+{
+	var name=document.getElementById("name").value;
+	var pub=document.getElementById("cbPub").checked;
+	fvm.RenameMacro(macroName,name,pub);
+}
+
+function DeleteMacro()
+{
+	var name=document.getElementById("name").value;
+	var pub=document.getElementById("cbPub").checked;
+	var ok=window.confirm('Are you sure you want to delete the macro "'+name+'"?');
+	if (ok)
+		fvm.DeleteMacro(name,pub,
+		function(){
+			macroName=null;
+			macroText=null;
+			GetList();
+		});
+}
+
+function TogglePub(cb)
+{
+	macroPub = cb.checked;
+	if (macroPub && !fvm.secToken)
+	{
+		alert("You will not be able to submit as a public macro without being logged-on as an Administrator - click Mode type in title bar to switch to Admin Mode");
+	}
+}
+
+function GetMacro(idx,lockPW)
+{
+	var file = fileList.files[idx];
+	if (file.hasDesign)
+	{
+		fvm.GetDesign(file.name, file.pub, lockPW, function (designJson)
+		{
+			fvm.design=design=flow.macs.fromJSON(designJson);
+		});
+	}
+	fvm.GetMacro(file.name, file.pub, lockPW, function (js)
+	{
+		lastGenText = macroText = js;
+		macroPub = file.pub;
+		macroName = file.name;
+		SetEditor(file.name, js, file.pub);
+	});
+}
+
+var focusIdx=-1;
+function FocusListRow(idx)
+{
+	if (idx==focusIdx)
+		return;
+	var btn=document.getElementById("MRM"+idx);
+	var row=document.getElementById("MLR"+idx);
+	if (focusIdx!=-1)
+	{
+		var oldRow=document.getElementById("MLR"+focusIdx);
+		if (oldRow)
+			oldRow.className='normRow';
+		focusIdx=-1;
+	}
+	if (row)
+	{
+		row.className='boldRow';
+	}
+	if (btn)
+	{
+		try { btn.focus(); } catch (e) { }
+	}
+	focusIdx=idx;
+}
+
+var btnFocusID=null;
+function BtnFocus(ev)
+{
+	var targ=flow.macs.GetEvTarget(ev);
+	var idx=parseInt(targ.id.substr(3));
+	btnFocusID=targ.id;
+	FocusListRow(idx);
+}
+
+function ListKeyDn(ev)
+{
+	var key=(ev.charCode)?ev.charCode:
+		((ev.keyCode)?ev.keyCode:((ev.which)?ev.which:0));
+	if (key==27)
+	{
+		fvmCtl.ToggleWin();
+		return;
+	}
+	if ((key!=38) && (key!=40))
+		return true;
+	var targ=flow.macs.GetEvTarget(ev);
+	var idx=parseInt(targ.id.substr(3));
+	switch(key)
+	{
+		case 38:
+			idx--;
+			if (idx<0)
+				idx=fileList.files.length-1;
+			break;
+		case 40:
+			idx++;
+			if (idx>=fileList.files.length)
+				idx=0;
+			break;
+	}
+	var newBtn=document.getElementById(targ.id.substr(0,3)+idx);
+	if (newBtn)
+	{
+		try { newBtn.focus(); } catch (e) { }
+	}
+}
+
+function RunMacro(idx, keepEditor)
+{
+	var file = fileList.files[idx];
+	fvm.StartMacro(file.name,file.pub,keepEditor);
+	if (parent && parent.fvmCtl)
+		parent.fvmCtl.ToggleWin();
+	/*
+	fvm.GetMacro(file.name,file.pub,function(js){
+		eval(js);
+	});*/
+}
+var fileList=null;
+function GetList()
+{
+	var activeIndex=0, 
+		 filterRecogChecked=(fvm.listRecogOnly)?' checked':'',
+		 elem, t, idx, file, scnName, recog, activeScn,
+		 body = document.getElementById('docBody');
+	if (body)
+	{
+		body.style.height = 'auto';
+		body.style.width = 'auto';
+	}
+
+	SaveEditor();
+	fvmCtl.SetSizingElems('macList','docBody');
+	fvm.GetList(function (result)
+	{
+		fileList = result;
+		fvmCtl.sizeElemID = '';
+		elem = document.getElementById("content");
+		if (result.status == "ok")
+		{
+			t = '<table id="macList" style="width:35em" onkeydown="ListKeyDn(event)"><tr><th>Actions</th><th>Name</th><th>Type</th><th>Timestamp</th></tr>';
+			for (idx in result.files)
+			{
+				file = result.files[idx];
+				if (fvm.listRecogOnly && file.recog)
+				{
+					fvm.scnHistory = '';
+					activeScn = fvm.ActiveScreen(file.recog);
+					if (activeScn)
+					{
+						var found = false;
+						for (scnName in file.recog)
+						{
+							if (scnName == activeScn.id)
+							{
+								found = true;
+								break;
+							}
+						}
+						if (!found)
+							continue;
+					}
+				}
+				t += '<tr id="MLR' + idx + '"><td align="center" style="padding-left:2px;padding-right:2px;white-space:nowrap;">';
+				t += '<a class="button" id="MRM' + idx + '" href="#" onfocus="BtnFocus(event)" onclick="RunMacro(' + idx + ',false)"><span>Run</span></a>';
+				if (file.edit)
+					t += '<a class="button" id="MEM' + idx + '" href="#" onfocus="BtnFocus(event)" onclick="GetMacro(' + idx + ')"><span>Edit</span></a>';
+				t += '</td><td>' + file.name + '</td><td>' + ((file.pub) ? 'Public' : 'Private') + '</td>';
+				t += '<td>' + file.timeStamp + '</td></tr>';
+				if (fvm.activeMacroName &&
+					 (file.name == fvm.activeMacroName))
+					activeIndex = idx;
+			}
+			t += '<tr>';
+			t += '<td colspan="4" align="left">';
+			if (fvm.isAuthor)
+			{
+				t += '<span style="cursor:pointer" onclick="window.setTimeout(\'fvmCtl.DesignNew();\')"><img alt="Click to Design a New Macro" style="margin-left:2px;margin-right:3px;" title="Click to Design a new Macro" src="img/add.gif" width="16" height="16"/>Design a New Macro</span>';
+			}
+			t += "</td></tr></table>";
+			elem.innerHTML = t;
+		}
+		else
+			elem.innerHTML = "Error! " + result.message;
+		focusIdx = -1;
+		WriteTabs("list");
+		window.setTimeout("Sizer();FocusListRow(" + activeIndex + ");", 1);
+	});
+}
+
+function ChangeListRecogOption(cb)
+{
+	fvm.listRecogOnly = cb.checked;
+	window.setTimeout('GetList()',1);
+}
+
+function FocusWizard()
+{
+	SaveEditor();
+	var contentElem = document.getElementById("content"),
+	body = document.getElementById('docBody');
+	if (body)
+	{
+		body.style.height = 'auto';
+		body.style.width = 'auto';
+	}
+	try
+	{
+		fvmCtl.SetSizingElems('wizTable','docBody');
+		MacWizard(document,contentElem);
+	}
+	catch(e)
+	{
+		contentElem.innerHTML='<span style="height:50px;text-align:center;vertical-align:middle;width:400px;font-weight:bold">Error Generating from Macro Recording at '+ks+': '+e.message+'</span>';
+	}
+	WriteTabs("gen");
+	window.setTimeout("Sizer()",1);
+}
+
+function FocusEditor()
+{
+	SetEditor(macroName,macroText,macroPub);
+}
+
+function SaveEditor()
+{
+	if (activeTabID=="edit")
+	{
+		macroPub=document.getElementById("cbPub").checked;
+		macroText = document.getElementById("macro").value;
+		macroName=document.getElementById("name").value;
+	}
+}
+
+var msg='';
+function EditorKD(ev,keyup)
+{
+	if (!ev.ctrlKey)
+		return true;
+	var keyCode=(ev.keyCode)?ev.keyCode:(ev.which)?ev.which:ev.charCode;
+	if (keyCode != 83)
+		return true;
+	if (!keyup)
+		try{SaveMacro();}catch(e){}
+	if (ev.keyCode)
+		ev.keyCode=0;
+	return flow.macs.CancelEv(ev);
+}
+
+function SetEditor(name,text,pub)
+{
+	var body = document.getElementById('docBody');
+	if (body)
+	{
+		body.style.height = 'auto';
+		body.style.width = 'auto';
+	} 
+	fvm.SetActiveMacro(name, text, pub);
+	fvm.keepEditor = true;
+	fvmCtl.SetSizingElems('macro','docBody');
+	var pwVis=(pub)?'visible':'hidden';
+	var t='<form onkeydown="EditorKD(event)" onkeyup="EditorKD(event,true)" onkeypress="EditorKD(event,true)" onsubmit="return false" action="" style="padding:4px;font-size:0.8em;max-width:60em;width:60em">';
+	t+='<div style="display:inline;whitespace:nowrap">Name: <input type="text" name="name" id="name" size="20" value="'+name+'"/>';
+	t+='<input type="checkbox" name="cbPub" id="cbPub" onclick="TogglePub(this)" '+((pub)?'checked':'')+'/> Public';
+	t+='<button value="Test" style="display:inline;margin-left:1em;" onclick="PlayMacro()">Test/Play</button></div>'
+	t+='<button value="Send" style="margin-left:1em;" onclick="SaveMacro()">Save</button>';
+	t+='<button value="Rename" style="display:inline;margin-left:1em;" onclick="RenameMacro()">Rename</button>';
+	t+='<button value="Delete" style="display:inline;margin-left:1em;" onclick="DeleteMacro()">Delete</button></div>'
+	t+='<textarea name="macro" style="margin-left:2px;margin-right:2px;width:58em;" ';
+	t += '   id="macro" cols="90" rows="35" spellcheck="false">';
+	t+=text;
+	t+='</textarea><br />';
+	t+='<p>UserID:&nbsp;<span id="userID">'+userID+'</span>&nbsp;&nbsp;Host Name:&nbsp;<span id="hostName">'+hostName+'</span>';
+	t+='</p>';
+	document.getElementById("content").innerHTML=t;
+	WriteTabs("edit");
+	window.setTimeout("Sizer()",1);
+}
+
+var selected = "logons";
+function AdmSelect(elem)
+{
+	var oldElem, selBody = document.getElementById('selBody');
+	if (selected)
+	{
+		oldElem = document.getElementById(selected);
+		if (oldElem)
+			oldElem.className = '';
+	}
+	elem.className = "on";
+	switch (elem.id)
+	{
+		case "pw":
+			selBody.innerHTML = AdmSetPW();
+			break;
+		case "logons":
+			selBody.innerHTML = AdmLogons();
+			break;
+		case "authors":
+			selBody.innerHTML = AdmAuthors();
+			break;
+	}
+	selected = elem.id;
+}
+
+function CurGet(id)
+{
+	return '<img alt="Click to switch to Emulator so that you can position cursor and capture on return to this form" title="Click to switch to Emulator so that you can position cursor and capture on return to this form" src="ScnCursor.png" style="cursor:pointer;position:relative;top:5px;margin-left:2px" onclick="GotoTerm(\'' + id + '\')" />';
+}
+
+function GotoTerm(id)
+{
+	getCursorTo = id;
+	fvmCtl.ToggleWin();
+}
+
+function SetCursorFrom(id)
+{
+	var em = fvm.em,
+		 row = Math.floor(em.csrO / em.cols),
+		 col = Math.floor(em.csrO % em.cols),
+		 lines = em.GetScnLines(), t = '@' + (row + 1) + ',' + (col + 1),
+		 input = document.getElementById(id),
+		 len;
+
+	if (id == 'idAt')
+	{
+		t += ',8';
+	}
+	else
+	{
+		if (input)
+		{
+			if (input.value.length > 0)
+			{
+				if (input.value.charAt(input.value.length - 1) != ';')
+					t = input.value + ';' + t;
+				else
+					t = input.value + t;
+			}
+		}
+		len = Math.min(em.cols - col, 15);
+		t += "='" + flow.macs.trim(lines[row].substr(col, len)) + "';";
+	}
+	if (input)
+		input.value = t;
+}
+
+function AdmLogons()
+{
+	var t = '<div style="margin-left:20px">Retrieving Current Logon Settings...</div>';
+	fvm.AxCall("getlogoninfo",
+		function (oxh)
+		{
+			var resp = JSON.parse(oxh.responseText),
+				 selBody = document.getElementById("selBody"),
+				 i, scnInfo, name, id;
+
+			if (resp.status != 'ok')
+			{
+				alert('Failed to retrieve active Host Logon Settings (' + resp.message + ')');
+				return;
+			}
+			t = '<form action="#" method="post" class="pform" id="admPWform" style="height:auto">';
+			t += '<fieldset id="macParms" style="width:50em">';
+			t += '<legend>Change UserID Logon Detection Settings for Host ' + hostName + '</legend>';
+			t += '<label for="findWhen">Signon Screen Detect</label>';
+			t += '<input type="text" id="findWhen" name="findWhen" value="' + resp.FindWhen + '" tabindex="2" size="70"/>'+CurGet('findWhen')+'<br />';
+			t += '<label for="idAt">Signon UserID Location</label>';
+			t += '<input type="text" id="idAt" name="idAt" value="' + resp.ReadAt + '" tabindex="2" size="70"/>' + CurGet('idAt') + '<br />';
+			name = 'OKWhen';
+			for (i = 0; i < 3; i++)
+			{
+				scnInfo = (resp.OKWhen.length > i) ? resp.OKWhen[i] : null;
+				if (i > 0)
+					id = name + (i + 1);
+				else
+					id = name;
+				t += '<label for="' + id + '">OK When #' + (i + 1) + '</label>';
+				t += '<input type="text" id="' + id + '" name="' + id + '" value="' + ((scnInfo) ? scnInfo : '') + '" tabindex="2" size="70"/>' + CurGet(id) + '<br />';
+			}
+			name = 'BadWhen';
+			for (i = 0; i < 3; i++)
+			{
+				scnInfo = (resp.BadWhen.length > i) ? resp.BadWhen[i] : null;
+				if (i > 0)
+					id = name + (i + 1);
+				else
+					id = name;
+				t += '<label for="' + id + '">Bad When #' + (i + 1) + '</label>';
+				t += '<input type="text" id="' + id + '" name="' + id + '" value="' + ((scnInfo) ? scnInfo : '') + '" tabindex="2" size="70"/>' + CurGet(id) + '<br />';
+			}
+			t += '</fieldset>';
+			t += '</form>';
+			t += '<div class="btn">';
+			t += '<span onclick="onLogonsEnter()">Apply</span>';
+			t += '</div>';
+			selBody.innerHTML = t;
+		});
+	
+	return t;
+}
+
+function onLogonsEnter()
+{
+	var findWhen = document.getElementById("findWhen").value,
+		 idAt = document.getElementById("idAt").value,
+		 OKWhen = document.getElementById("OKWhen").value,
+		 OKWhen2 = document.getElementById("OKWhen2").value,
+		 OKWhen3 = document.getElementById("OKWhen3").value,
+		 BadWhen = document.getElementById("BadWhen").value,
+		 BadWhen2 = document.getElementById("BadWhen2").value,
+		 BadWhen3 = document.getElementById("BadWhen3").value;
+
+	fvm.AxCall('setlogoninfo',
+			function (oxh)
+			{
+				if (oxh.responseText != "ok")
+					alert("setlogoninfo Error!  Error Text=" + oxh.responseText);
+				else
+					alert("Logon UserID Detection Settings Updated for Host " + hostName);
+			}, 'findWhen=' + encodeURIComponent(findWhen) +
+				 '&idAt=' + encodeURIComponent(idAt) +
+				 '&OKWhen=' + encodeURIComponent(OKWhen) +
+				 '&OKWhen2=' + encodeURIComponent(OKWhen2) +
+				 '&OKWhen3=' + encodeURIComponent(OKWhen3) +
+				 '&BadWhen=' + encodeURIComponent(BadWhen) +
+				 '&BadWhen2=' + encodeURIComponent(BadWhen2) +
+				 '&BadWhen3=' + encodeURIComponent(BadWhen3)
+				 );
+}
+
+function AdmSetPW()
+{
+	var t='<form action="#" method="post" class="pform" id="admPWform" style="height:auto">';
+	t+='<fieldset id="macParms" style="width:35em">';
+	t+='<legend>Change Administration Password for Flynet Viewer Host '+hostName+'</legend>';
+	t+='<label for="oldPW">Old Password</label>';
+	t+='<input type="password" id="oldPW" name="oldPW" tabindex="2" size="10"/><br />';
+	t+='<label for="newPW">New Password</label>';
+	t+='<input type="password" id="newPW" name="newPW" tabindex="3" size="10"/><br />';
+	t+='<label for="newPW">Repeat New Password</label>';
+	t+='<input type="password" id="newPW2" name="newPW2" tabindex="4" size="10"/><br />';
+	t+='</fieldset>';
+	t+='</form>';
+	t+='<div class="btn">';
+	t+='<span onclick="onAdmPWEnter()">Apply</span>';
+	t += '</div>';
+	return t; 
+}
+
+function onAdmPWEnter()
+{
+	var oldPW = document.getElementById("oldPW").value,
+		 newPW = document.getElementById("newPW").value,
+		 newPW2 = document.getElementById("newPW2").value;
+	if (newPW != newPW2)
+	{
+		alert("There is a mismatch with the two new Passwords--please correct and retry...");
+		return;
+	}
+	fvm.AxCall("resetpw&oldPW=" + oldPW + "&newPW=" + newPW,
+		function (oxh)
+		{
+			if (oxh.responseText != "ok")
+				alert("Reset Password Error!  Error Text=" + oxh.responseText);
+			else
+				alert("Password Reset Successful for Host " + hostName);
+		});
+}
+
+function AdmAuthors()
+{
+	var t = '<div style="margin-left:20px">Retrieving Current Author Settings...</div>';
+	fvm.AxCall("getauthorinfo",
+		function (oxh)
+		{
+			var resp = JSON.parse(oxh.responseText),
+				 selBody = document.getElementById("selBody"),
+				 i, parts, text;
+
+			if (resp.status != 'ok')
+			{
+				alert('Failed to retrieve active Authors Settings (' + resp.message + ')');
+				return;
+			}
+
+			if (resp.Authors == '*')
+				text = resp.Authors;
+			else
+			{
+				parts = resp.Authors.split('|');
+				text = '';
+				for (i = 0; i < parts.length; i++)
+				{
+					if (parts[i]!='')
+						text += parts[i] + ' ';
+				}
+			}
+			t = '<form action="#" method="post" class="pform" id="admAuthorsform" style="height:auto">';
+			t += '<fieldset id="macParms" style="width:50em">';
+			t += '<legend>Change Authors Settings for Host ' + hostName + '</legend>';
+			t += '<label for="authorsInp">Author List</label>';
+			t += '<textarea id="authorsInp" name="authorsInp" tabindex="2" rows="10" cols="50"/>' + text + '</textarea><br />';
+			t += '</fieldset>';
+			t += '</form>';
+			t += '<div class="btn">';
+			t += '<span onclick="onAuthorsEnter()">Apply</span>';
+			t += '</div>';
+			selBody.innerHTML = t;
+		});
+
+	return t;
+}
+
+function onAuthorsEnter()
+{
+	var text = document.getElementById("authorsInp").value.replace(/\s+/g, '|');
+
+	fvm.AxCall('setauthorinfo&authors=' + encodeURIComponent(text),
+		function (oxh)
+		{
+			if (oxh.responseText != "ok")
+				alert("Update Authors Error!  Error Text=" + oxh.responseText);
+			else
+				alert("Authors Update Successful for Host " + hostName);
+		});
+}
+
+function AdminSettings()
+{
+	var t = '<div id="admSizer" style="background-color:#ccdddd;height:420px;"><div class="tiles">';
+	t+='<div id="logons" class="on" onclick="AdmSelect(this)"><span>Set Logon Detection</span></div>';
+	t+='<div id="authors" onclick="AdmSelect(this)"><span>Set Macro Authors</span></div>';
+	t += '<div id="pw" onclick="AdmSelect(this)"><span>Set Admin Password</span></div>';
+	t += '</div><div class="tileSelected"><div class="interior" id="selBody">' + AdmLogons() + '</div>';
+	t += '</div><div style="clear:both;"></div></div>',
+	body = document.getElementById('docBody');
+	if (body)
+	{
+		body.style.height = '470px';
+		body.style.width = '840px';
+	}
+	SaveEditor();
+	fvmCtl.SetSizingElems('docBody', 'docBody');
+	document.getElementById("content").innerHTML = t;
+	WriteTabs("admin");
+	window.setTimeout("Sizer()", 1);
+}
+
+function TestQueue()
+{
+	if (fileList==null)
+		GetList();
+	for(var idx in fileList.files)
+	{
+		var file=fileList.files[idx];
+		GetMacro(idx,true);
+	}
+}
+var tabs=[
+ {"id":"list","func":"GetList()","tab":"Macro List"},
+ {"id":"gen","func":"FocusWizard()","tab":"Design Macro"},
+ { "id": "edit", "func": "FocusEditor()", "tab": "Edit Macro" },
+ { "id": "admin", "func": "AdminSettings()", "tab": "Admin" }
+];
+function WriteTabs(active)
+{
+	activeTabID=active;
+	var hdr = document.getElementById("header"),
+		 t = '<ul>';
+	for(var ti=0;ti<tabs.length;ti++)
+	{
+		var tab=tabs[ti];
+		if ((tab.id=="gen") &&
+			 !(fvm.recPending||design))
+			continue;
+		if ((tab.id=="edit") &&
+			 (!fvm.keepEditor ||
+			  !macroText || 
+			  (macroText=="")))
+			continue;
+		if ((tab.id == 'admin') &&
+			 !fvm.secToken)
+			continue;
+		if (tab.id==active)
+			t+='<li id="selected">';
+		else
+			t+='<li>';
+		t+='<a href="#" onclick="'+tab.func+'">'+tab.tab+'</a></li>';
+	}
+	t+='</ul>';
+	hdr.innerHTML=t;
+}
+function Sizer()
+{
+	if (fvmCtl)
+	{
+		fvmCtl.ActivateWinPage();
+		fvmCtl.SizeWinPageTo();
+	}
+}
+</script>
+</head>
+<body id="docBody" onload="InitMacros();">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:3px;background-image:url('img/tbarback.gif');background-repeat:repeat-y;border-bottom:groove thin;"><tr><td><img src="img/fsIcon.gif" height="16" width="16" style="float:left;margin:2px 4px 2px 2px;border:none;vertical-align:middle" alt="" /><span class="xeWinTitle" style="background-color:transparent">Flynet Viewer WebFlow Macros</span></td><td align="right"><span class="winMode" style="display:inline;">Mode: <span id="userMode" onclick="flow.macs.Login()" title="Click to Logon in Administrator Mode">User</span></span><img src="img/closebutton.gif" style="margin:4px 4px 2px 2px;cursor:pointer;border:none;" height="14" width="16" onclick="fvmCtl.ToggleWin()" alt="Close this Window" /></td></tr></table>
+<div id="header">
+</div>
+<div id="content">
+</div>
+</body>
+</html>

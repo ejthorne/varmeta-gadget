@@ -1,0 +1,13 @@
+Plugins/ActionBlock.js
+Plugins/ActionDesigner.js
+Plugins/ActionEditor.js
+Plugins/CoreActions.js
+Plugins/EMailer.js
+Plugins/FlowDesigner.js
+Plugins/Mustache.js
+Plugins/TemplateEditor.js
+
+Following only if ActiveX=true
+Plugins/XlsData.js
+Plugins/xlsDesigner.js
+Plugins/DocMerger.js

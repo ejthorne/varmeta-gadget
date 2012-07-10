@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head>
+    <title>FlowMacros Test Stub</title>
+<style type="text/css">
+	.clickable{background-color:#aadddd;cursor:pointer;padding-left:3px;padding-right:5px;}
+	td{background-color:transparent;}
+	table{background-color:#eeeeee;}
+	body{background-color:white;}
+</style>    
+<script language="javascript" type="text/javascript" src="FlowControl.js"></script>    
+<script language="javascript" type="text/javascript" src="FlowRuntime.js"></script>    
+<script language="javascript" type="text/javascript" src="FlowMacro.js"></script>    
+<script type="text/javascript">
+	var fvmCtl = new flow.macs.FVMControl(null),
+		 main = null,
+		 is_ipad=false;  					// macro support
+	function InitFlows()
+	{
+		main = document.getElementById("docBody");
+		flow.macs.macUri = './';  // Where to load JS and image files from
+		flow.macs.callUri = './FlowMacros.aspx';  // Where to call the management functions
+		flow.macs.callStyle = 'qs';   // set to 'path' for included in path, qs for querystring arg
+	}
+</script>
+</head>
+<body id="docBody" onload="InitFlows()">
+<img alt="Click to Manage Scripting Macros" title="Click to Manage Scripting Macros" id="macIcon" src="img/macroIco.gif" 
+										width="20" height="20"	onmousedown="try{fvmCtl.ToggleWin();}catch(e){alert(e.message)}"
+											style="CURSOR:hand;cursor:pointer"/>
+</body>
+</html>

@@ -1,0 +1,11 @@
+Dear {{&FirstName}},
+
+We have made the change for Account {{Account}}:  Billing Day changed to {{BillingDay}}.
+
+The following Addresses are on your account:
+{{#Addresses}}
+	Name: {{Name}} Address: {{Address}} City: {{City}} 
+{{/Addresses}}
+
+Thankyou for your continued business,
+{{RepName}}

@@ -1,0 +1,6 @@
+﻿{{FirstName}},
+
+We wanted to let you know that for the {{PolicyName}} policy, we have processed your request to change your Billing Day to {{BillDay}}, and this will be in effect for the next Billing Cycle.
+
+Thanks for your continued business,
+{{Signature}}

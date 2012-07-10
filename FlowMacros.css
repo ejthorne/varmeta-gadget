@@ -1,0 +1,967 @@
+﻿/* Tabbed Header */
+	#docBody
+	{
+		padding:0;
+		margin:2px 2px 2px 2px;
+	}
+	#header
+	{
+		font-family:Calibri,Helvetica, Helvetica Neue, Arial;
+	}
+	#header ul {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	 }
+	 
+	#header li {
+		float: left;
+		border: 1px solid #bbb;
+		border-bottom-width: 0;
+		margin: 0;
+	 }
+	 
+	#header a {
+		text-decoration: none;
+		display: block;
+		background: #eee;
+		padding: 2px 4px;
+		color: #00c;
+		width: 7em;
+		text-align: center;
+	 }
+	
+	#header a:hover {
+		background: #ddf;
+	}
+	
+	#header #selected {
+		border-color: black;
+	}
+	
+	#header #selected a {
+		position: relative;
+		top: 1px;
+		background-color:#ccdddd;
+		color: black;
+		font-weight: bold;
+	}
+	
+	#content 
+	{
+		font-family:Calibri,Helvetica, Helvetica Neue, Arial;
+		border: 1px solid black;
+		clear: both;
+		padding: 0;
+		margin:0;
+		background-color:#ccdddd;
+	}
+
+.btn 
+{
+	margin-top:10px;
+	text-align:center;
+  min-width: 500px;
+  max-width: 600px;
+  width: 560px; 
+ }
+.btn span {
+  display: inline-block;
+  padding: 4px  4px;
+  background: #3194c6;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius:3px;
+  cursor:pointer;
+}
+
+.pform {  /* set width in form, not fieldset (still takes up more room w/ fieldset width */
+  font:100% calibri,verdana,arial,sans-serif;
+  margin: 0;
+  padding: 0;
+  min-width: 500px;
+  max-width: 600px;
+  width: 560px;
+  font-size: 0.8em; 
+}
+
+.pform fieldset {
+  clear: both;
+  border-color: #000;
+  border-width: 1px;
+  border-style: solid;
+  padding: 10px;
+  margin: 0;
+}
+
+.pform fieldset legend {
+	font-size:1.1em; /* bump up legend font size, not too large or it'll overwrite border on left */
+							  /* be careful with padding, it'll shift the nice offset on top of border  */
+}
+
+.pform label { 
+	display: block;  /* block float the labels to left column, set a width */
+	float: left; 
+	width: 12em; 
+	padding: 0; 
+	margin: 5px 0 0; /* set top margin same as form input - textarea etc. elements */
+	text-align: right; 
+}
+
+.pform label.narrow{ 
+	width: 8em; 
+}
+
+.pform label.medium{ 
+	width: 14em; 
+}
+
+.pform label.wide{ 
+	width: 18em; 
+}
+
+.pform input, .pform textarea, .pform select {
+	/* display: inline; inline display must not be set or will hide submit buttons in IE 5x mac */
+	width:auto;      /* set width of form elements to auto-size, otherwise watch for wrap on resize */
+	margin:5px 0 0 10px; /* set margin on left of form elements rather than right of
+										label aligns textarea better in IE */
+}
+
+.pform .filetype
+{
+	width:6em;
+}
+
+.pform input#reset {
+	margin-left:0px; /* set margin-left back to zero on reset button (set above) */
+}
+
+textarea { overflow: auto; }
+
+.pform .small {
+	display: block;
+	margin: 0 0 5px 160px; /* instructions/comments left margin set to align w/ right column inputs */
+	padding: 1px 3px;
+	font-size: 0.7em;
+}
+
+.pform .required{font-weight:bold;} /* uses class instead of div, more efficient */
+
+.pform br {
+	clear:left; /* setting clear on inputs didn't work consistently, so brs added for degrade */
+}
+/* Wizard page */
+#wizTop,#wizBottom,#wizProps
+{
+	display:block;
+	margin:0;
+	padding:0;
+}
+#wizBottom
+{
+	text-align:center;
+}
+
+.list
+{
+	overflow:auto;
+	width:auto;
+	position:relative;
+}
+
+.container
+{
+	overflow:auto;
+	width:auto;
+	height:auto;
+	position:relative;
+}
+
+.listElem
+{
+	display:block;
+	background-color:#9999ff;
+	font-size:0.8em;
+	font-family:Calibri,Arial, Helvetica, sans-serif;
+	margin:0.1em 0.8em 0.1em 0.8em;
+	cursor:pointer;
+	padding:3px;
+}
+
+/* Field Matcher */
+.dynWin
+{
+	font-size:1.0em;
+	font-family:Calibri,Arial, Helvetica, sans-serif;
+	position:absolute;
+	width:800px;
+	z-index:1000;
+	background-color:#000020;
+	border:ridge 3px #ddddff;
+}
+.dynWin .title
+{
+	font-size:0.8em;
+	font-weight:bold;
+	color:#ccccff;
+	position:absolute;
+}
+
+.dynWin .header
+{
+	font-size:0.7em;
+	font-weight:bold;
+	color:#bbbbff;
+	position:absolute;
+}
+
+.absimg
+{
+	border:0;
+	padding:0;
+	position:absolute;
+}
+
+.addimg
+{
+	margin:0px 3px 0px 0px;
+	border:0;
+	padding:0;
+	vertical-align:middle;
+	text-align:left;
+}
+
+.multiimg
+{
+	margin-top:1px;
+	border:0;
+	padding:0;
+	vertical-align:middle;
+	text-align:left;
+}
+
+.dynWin .label
+{
+	margin:0px 3px 0px 2px;
+}
+
+.dynWin .matchText
+{
+	margin:0px 3px 0px 2px;
+	background-color:#8CE2EA;
+	border-style:outset;
+	position:relative;
+	top:-1px;
+	height:18px;
+	border:2px outset #464180;
+	display:inline-block;
+	cursor:pointer;
+}
+
+.dynWin .matchText span
+{
+	margin:3px;
+	position:relative;
+	top:-4px;
+}
+
+.dynWin .userInput, .dynWin .block
+{
+	background-color:#909090;
+	margin:auto;
+}
+
+.dynWin .block
+{
+	width:100%;
+}
+
+.dynWin .userInput
+{
+	position:absolute;
+}
+
+.dynWin .actions
+{
+	position:absolute;
+}
+
+.dynWin .matcher
+{
+	position:absolute;
+	border:solid 1px #555555;
+	z-index:3;
+	background-color:#909090;
+}
+
+.dynWin .pool
+{
+	background-color:#909090;
+	border:solid 1px #555555;
+	position:absolute;
+	z-index:2;
+	left:4px;
+}
+
+.dynWin .logicpool
+{
+	background-color:#000050;
+	border:solid 1px #555555;
+	position:absolute;
+	z-index:2;
+	left:4px;
+}
+
+.dynWin .loose, .dynWin .linked, .dynWin .target, .dynWin .misMatch
+{
+	z-index:4;
+	position:absolute;
+}
+
+.dynWin .loose
+{
+	background-color:#cccccc;
+	padding:3px;
+}
+
+.dynWin .linked
+{
+	background-color:#aaffaa;
+	padding:2px;
+	border: solid 1px black;
+}
+
+.dynWin .target, .dynWin .ext
+{
+	background-color:white;
+	padding:2px;
+	border: solid 1px yellow;
+	white-space: nowrap;
+}
+
+.dynWin .misMatch
+{
+	background-color:white;
+	padding:2px;
+	border: solid 1px red;
+}
+
+.dynWin .macVar span
+{
+	float:right;
+}
+
+.dynWin .src
+{
+	z-index:10;
+	text-align:left;
+	padding:1px 2px 1px 2px;
+	position:absolute;
+	cursor:move;
+	white-space: nowrap;
+}
+
+.dynWin .targ
+{
+	float:right;
+	padding:1px 2px 1px 2px;
+}
+
+.dynWin .macVar
+{
+	background-color:#9999ff;
+	border: solid 1px #444444;
+}
+
+.dynWin .actionType
+{
+	background-color:#A1F4A6;
+	border: solid 1px #444444;
+	position:absolute;
+}
+
+.dynWin .newLogic
+{
+	height:50px;
+	width:500px;
+}
+
+.dynWin .logic
+{
+	background-color:transparent;
+	z-index:50;
+	position:absolute;
+	cursor:move;
+}
+
+.dynWin .logic span
+{
+	color:black;
+	position:absolute;
+	font-size:1.0em;
+}
+
+.dynWin .logic img
+{
+	position:absolute;
+}
+
+.dynWin .actionContainer
+{
+	background-color:#2A331E;
+	position:absolute;
+	border: solid 1px #444444;
+	overflow:auto;
+	font-size:1.0em;
+}
+
+.dynWin .actionInsert
+{
+	position:absolute;
+	height:1px;
+	z-index:1029;
+	visibility: hidden;
+	background-color: #39CCDA;
+	border-top:1px solid white;
+	border-bottom:1px solid #BAE2E6;
+}
+
+.dynWin .dropOK
+{
+	border: solid 1px green;
+}
+
+.dynWin .dropBad
+{
+	border: solid 1px red;
+}
+
+.dynWin .ext
+{
+	background-color:black;
+	color:White;
+	border: solid 1px #444444;
+}
+
+.dynWin .connector
+{
+	float:right;
+	margin:1px 0 1px 0;
+	cursor:pointer;
+}
+
+.dynWin .ext span
+{
+	float:right;
+}
+#thumbs
+{
+	overflow:auto;
+	text-align:center;
+}
+.thumb,.thumbSel
+{
+	display:inline;
+	float:left;
+}
+.thumbImg
+{
+	cursor:pointer;
+	padding-left:5px;
+}
+.thumb
+{
+	margin:1px 2px 1px 2px;
+	cursor:pointer;
+	border-style:none;
+}
+.thumbSel
+{
+	margin:0px 1px 0px 1px;
+	cursor:pointer;
+	border:solid 1px yellow;
+}
+.thumb .label, .thumbSel .label
+{
+	position:relative;
+	z-index:20;
+	left:0px;
+	top:30px;
+	height:0px;
+	font-size:0.7em;
+	font-family:Calibri,Arial, Helvetica, sans-serif;
+}
+
+.thumb .label
+{
+	color:White;
+}
+
+.thumbSel .label
+{
+	color:Yellow;
+}
+
+.thumb .icon, .thumbSel .icon
+{
+	position:relative;
+	z-index:20;
+	left:20px;
+	top:30px;
+}
+
+.thumb .thumbScn, .thumbSel .thumbScn
+{
+	display:inline;
+	position:relative;
+	top:0px;
+	left:0px;
+	z-index:0;
+	white-space:pre;
+	margin:0;
+	padding:0;
+	font-size:3px;
+}
+
+.thumb .thumbScn
+{
+	background-color:Black;
+	color:#00AA00;	
+}
+
+.thumbSel .thumbScn
+{
+	background-color:#404040;
+	color:#00FF00;	
+}
+
+.wizButton{cursor:pointer;}
+#scnHtml 
+{
+	background-color:Black;
+	color:#00AA00;	
+	white-space:pre;
+	border:0;
+	margin:0;
+}
+.inpField
+{
+	border:solid 1px white;
+	color:#00aaFF;
+	background-color:#202020;
+	text-align:left;
+	vertical-align:middle;
+	z-index:10;
+}
+.chgField
+{
+	border:solid 1px #DD282B;
+	color:#353C3D;
+	background-color:#E2D881;
+	text-align:left;
+	vertical-align:middle;
+	cursor:pointer;
+	z-index:12;
+}
+.recogField
+{
+	color:#303030;
+	background-color:#78BEE3;
+	text-align:left;
+	vertical-align:middle;
+	z-index:13;
+	cursor:pointer;
+}
+
+.readField
+{
+	color:#303030;
+	background-color:#6FE355;
+	text-align:left;
+	vertical-align:middle;
+	z-index:13;
+	cursor:pointer;
+}
+
+.defPanel
+{
+	margin:0;
+	padding:0;
+}
+.optsInfo
+{
+	background-color:#cccccc;
+	text-align:left;
+	font-size:0.8em;
+	width:60%;
+	margin-left:auto;
+	margin-right:auto;
+	margin-top:10px;
+	padding:2px 5px 2px 5px;
+}
+.optsHeader
+{
+	font-size:1.0em;
+	font-weight:bold;
+}
+
+.optsPlugin
+{
+	margin:2px auto 2px 10px;
+	background-color:#aaaacc;
+	width:auto;
+	clear:both;
+}
+
+.optsPlugin .text
+{
+	float:left;
+	margin:4px 4px 2px 5px;
+}
+
+.optsPlugin .fixer
+{
+	clear:both;
+}
+
+.optsClicker
+{
+	margin:2px 5px 2px 0;
+	cursor:pointer;
+	padding:2px;
+	color:white;
+	background-color:blue;
+	float:right;
+}
+
+.winMode{
+	font-family:Calibri,Helvetica, Helvetica Neue, Arial;
+	position:relative;
+	top:-3px;
+	color:white;
+	font-size:0.9em;
+}
+
+.winMode span{
+	font-family:Calibri,Helvetica, Helvetica Neue, Arial;
+	color:#A3EBEB;
+	font-size:1.1em;
+	font-weight:bold;
+	margin-right:8px;
+	cursor:pointer;
+}
+
+.xeWinTitle{
+	font-family:Calibri,Helvetica, Helvetica Neue, Arial;
+	color:white;
+	font-size:0.9em;
+	font-weight:bold;
+}
+#wizProps
+{
+	overflow:auto;
+	height:200px;
+	margin-top:4px;
+}
+.modalBlanket
+{
+	position:absolute;
+	background-color:Gray;
+	opacity:0.4;
+	filter:alpha(opacity=40); /* For IE8 and earlier */
+}
+
+.DMULayer
+{
+	position:absolute;
+	background-color:transparent;
+	opacity:0.4;
+	filter:alpha(opacity=40); /* For IE8 and earlier */
+}
+
+.NewElemMsg
+{
+	position:absolute;
+	z-index: 2000;
+	background-color:#EDEF88;
+	border:1px solid #686861;
+	font-family:Calibri,Helvetica, Helvetica Neue, Arial;
+	font-size:0.9em;
+	text-align:center;
+	vertical-align:middle;
+	opacity:0.9;
+	filter:alpha(opacity=90); /* For IE8 and earlier */
+}
+
+.DMUShade
+{
+	position:absolute;
+	z-index: 5;
+	background-color:Black;
+	opacity:0.5;
+	filter:alpha(opacity=50); /* For IE8 and earlier */
+}
+
+#wizSizer
+{
+	height:2px;
+	position:absolute;
+	top:-20px;
+	z-index:200;
+	cursor:n-resize;
+}
+.dormant
+{
+	background-color:#5F7E7E;
+	border-bottom:solid 1px #2E5353;
+	border-top:solid 1px #BECDCD;
+}
+.active
+{
+	background-color:#9FbEbE;
+	border-bottom:solid 1px #6E9393;
+	border-top:solid 1px #fEfDfD;
+}
+.recogList, .changeList, .readList
+{
+	/*overflow:auto;*/
+	margin:0 0 0 15px;
+	padding:0 0 0 18px;
+	text-align:center;
+}
+.changeList
+{
+	/*height:6em;*/
+}
+.recogList
+{
+	/*height:4.8em;*/
+}
+.readList
+{
+	/*height:6em;*/
+}
+.elemTitle
+{
+	display:block;
+	margin:0;
+	font-size:0.8em;
+	text-align:left;
+}
+
+.elemTitle form
+{
+	display:inline;
+	margin:0;
+	padding:0;
+}
+
+.elemTitle input
+{
+	font-size:4em;
+}
+.wizRecogRow td
+{
+	background-color:#78BEE3;
+}
+.wizRecogRow .label
+{
+	font-size:0.7em;
+}
+.wizRecogRow .data
+{
+	font-size:0.7em;
+	font-weight:bold;
+	color:#3E9EE2;
+}
+
+.wizReadRow td
+{
+	background-color:#6FE355;
+}
+.wizReadRow .label
+{
+	font-size:0.7em;
+}
+.wizReadRow .data
+{
+	font-size:0.7em;
+	font-weight:bold;
+	color:black;
+}
+
+.wizChangeRow td
+{
+	border-left:solid 1px #687883;
+	border-right:solid 1px #687883;
+	padding:2px 1px 1px 2px;
+	text-align:left;
+	vertical-align:top;
+	background-color:#E2D881;
+}
+.wizChangeRow .label
+{
+	font-size:0.6em;
+	line-height:0.9em;
+	margin-top:2px;
+	padding-bottom:0px;
+}
+.wizChangeRow .data
+{
+	font-size:0.7em;
+	font-weight:bold;
+	color:#296088;
+	width:100%;
+	text-align:center;
+}
+#wizTable, .wizSettings, #macList
+{
+	padding:0;
+	margin:0;
+}
+#macList
+{
+	background-color:#889191;
+}
+#macList th
+{
+	font-size:0.8em;
+	background-color:#A8BDAA;
+}
+#macList td, #macList .normRow td
+{
+	font-size:0.8em;
+	background-color:#E2F2F2;
+}
+#macList .boldRow td
+{
+	background-color:#A3EBEB;
+} 
+#wizTable td input
+{
+	margin:1px;
+	font-size:0.7em;
+}
+.wizSettings td
+{
+	padding:2px;
+}
+.wizSettings
+{
+	width:100%;
+	border-bottom:solid 1px #687883;
+	border-left:solid 1px #687883;
+	border-right:solid 1px #687883;
+}
+.wizSettings input
+{
+	font-size:0.8em;
+	margin:0 2px 0 2px;
+}
+.wizSettings td
+{
+	border-top:solid 1px #687883;
+}
+.wizleft, .wizright
+{
+	width:40px;
+	padding:180px 0 0 0;
+	margin:0;
+	background-color:#303030;
+	cursor:pointer;
+	vertical-align:top;
+}
+.wizmid
+{
+	/*border-top:solid 3px #303030;*/
+	font-size:0.9em;
+	text-align:center;
+}
+/* Button styler */
+
+a.button {
+	 /* Sliding right image */    
+	 background: transparent url('img/button_right.png') no-repeat scroll top right; 
+	 display: block;
+	 float: left;
+	 height: 20px; /* CHANGE THIS VALUE ACCORDING TO IMAGE HEIGHT */
+	 margin-right: 6px;
+	 padding-right: 20px; /* CHANGE THIS VALUE ACCORDING TO RIGHT IMAGE WIDTH */
+	 /* FONT PROPERTIES */
+	 text-decoration: none;
+	 color: #000000;
+	 font-family: Calibri, Arial, Helvetica, sans-serif;
+	 font-size:0.9em;
+	 font-weight:bold;
+	 cursor:pointer;
+}
+
+a.button span{    /* Background left image */ 
+	 background: transparent url('img/button_left.png') no-repeat;     display: block;
+	 line-height: 8px; /* CHANGE THIS VALUE ACCORDING TO BUTTON HEIGHT */
+	 padding: 7px 0 5px 18px;
+	 cursor:pointer;
+} 
+
+a.button:hover span{
+	 text-decoration:underline;
+}
+
+.tiles
+{
+	display:inline;
+	width:100px; 
+	float:left;
+	font-family:Calibri,Helvetica, Helvetica Neue, Arial;
+}
+
+.tiles div
+{
+	margin:5px;
+	padding:5px;
+	width:80px;
+	height:80px;
+	color:White;
+	text-align:center;
+	vertical-align:middle;
+	background-color:#7AA4C1;
+	border-style:outset;
+	border-color:#cccccc;
+	cursor:pointer;
+}
+
+.tiles .on
+{
+	background-color:#63859D;
+	border-color:navy;
+}
+
+.tiles div span
+{
+	position:relative;
+	top:20px;
+	margin:auto;
+}
+
+.tileSelected
+{
+	display:inline;
+	float:left;
+	font-family:Calibri,Helvetica, Helvetica Neue, Arial;
+	background-color:#63859D;
+	border-color:navy;
+	border-style:outset;
+	position:relative;
+	top:5px;
+	margin-left:10px;
+	height:400px;
+	width:700px;
+}
+.tileSelected .interior
+{
+	margin:10px;
+	padding:5px;
+	background-color:#dddddd;
+	height:370px;
+	width:670px;
+}
